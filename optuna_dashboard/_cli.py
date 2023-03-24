@@ -117,17 +117,19 @@ def main() -> None:
     if args.artifact_dir is not None:
         artifact_backend = FileSystemBackend(args.artifact_dir)
     app = create_app(storage, artifact_backend=artifact_backend, debug=DEBUG)
+    root = Bottle()
+    root.mount(os.environ.get("URL_PREFIX", ""), app)
 
     if DEBUG and isinstance(storage, RDBStorage):
-        app = register_profiler_view(app, storage)
+        app = register_profiler_view(root, storage)
 
     server = auto_select_server(args.server)
     if DEBUG:
-        run_debug_server(app, args.host, args.port, args.quiet)
+        run_debug_server(root, args.host, args.port, args.quiet)
     elif server == "wsgiref":
-        run_wsgiref(app, args.host, args.port, args.quiet)
+        run_wsgiref(root, args.host, args.port, args.quiet)
     elif server == "gunicorn":
-        run_gunicorn(app, args.host, args.port, args.quiet)
+        run_gunicorn(root, args.host, args.port, args.quiet)
     else:
         raise Exception("must not reach here")
 

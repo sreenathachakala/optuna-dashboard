@@ -54,6 +54,7 @@ if typing.TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+URL_PREFIX = os.environ.get("URL_PREFIX", "")
 # Static files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "public")
@@ -200,20 +201,21 @@ def create_app(
     def index() -> BottleViewReturn:
         update_schema_compatibility_flags(storage)
         if rdb_schema_needs_migrate or rdb_schema_unsupported:
-            return redirect("/incompatible-rdb-schema", 302)
-        return redirect("/dashboard", 302)  # Status Found
+            return redirect(f"{URL_PREFIX}/incompatible-rdb-schema", 302)
+        return redirect(f"{URL_PREFIX}/dashboard?base={URL_PREFIX}", 302)  # Status Found
 
     # Accept any following paths for client-side routing
-    @app.get("/dashboard<:re:(/.*)?>")
+    @app.get("/dashboard")
     def dashboard() -> BottleViewReturn:
+        print("test dashboard")
         if rdb_schema_needs_migrate or rdb_schema_unsupported:
-            return redirect("/incompatible-rdb-schema", 302)
+            return redirect(f"{URL_PREFIX}/incompatible-rdb-schema", 302)
         return static_file("index.html", BASE_DIR, mimetype="text/html")
 
     @app.get("/incompatible-rdb-schema")
     def get_incompatible_rdb_schema() -> BottleViewReturn:
         if not rdb_schema_needs_migrate and not rdb_schema_unsupported:
-            return redirect("/dashboard", 302)
+            return redirect(f"{URL_PREFIX}/dashboard", 302)
         assert isinstance(storage, RDBStorage)
         return rdb_schema_template.render(
             rdb_schema_needs_migrate=rdb_schema_needs_migrate,
@@ -229,7 +231,7 @@ def create_app(
         with rdb_schema_migrate_lock:
             storage.upgrade()
             rdb_schema_needs_migrate = False
-        return redirect("/dashboard", 302)
+        return redirect(f"{URL_PREFIX}/dashboard", 302)
 
     @app.get("/api/meta")
     @json_api_view
@@ -476,8 +478,9 @@ def create_app(
         filename = "favicon.ico.gz" if use_gzip else "favicon.ico"
         return static_file(filename, IMG_DIR)
 
-    @app.get("/static/<filename:path>")
+    @app.get("<:re:(/.*)?>static/<filename:path>")
     def send_static(filename: str) -> BottleViewReturn:
+        print("filename", filename, STATIC_DIR)
         if not debug and "gzip" in request.headers["Accept-Encoding"]:
             gz_filename = filename.strip("/\\") + ".gz"
             if cached_path_exists(os.path.join(STATIC_DIR, gz_filename)):

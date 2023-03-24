@@ -118,7 +118,7 @@ def main() -> None:
         artifact_backend = FileSystemBackend(args.artifact_dir)
     app = create_app(storage, artifact_backend=artifact_backend, debug=DEBUG)
     root = Bottle()
-    root.mount(os.environ.get("URL_PREFIX", ""), app)
+    root.mount(os.environ.get("URL_PREFIX", "/"), app)
 
     if DEBUG and isinstance(storage, RDBStorage):
         app = register_profiler_view(root, storage)

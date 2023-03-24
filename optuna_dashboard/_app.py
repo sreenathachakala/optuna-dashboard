@@ -55,6 +55,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 URL_PREFIX = os.environ.get("URL_PREFIX", "")
+BASE_URL = f"{URL_PREFIX}/dashboard?base={URL_PREFIX}"
 # Static files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "public")
@@ -202,7 +203,7 @@ def create_app(
         update_schema_compatibility_flags(storage)
         if rdb_schema_needs_migrate or rdb_schema_unsupported:
             return redirect(f"{URL_PREFIX}/incompatible-rdb-schema", 302)
-        return redirect(f"{URL_PREFIX}/dashboard?base={URL_PREFIX}", 302)  # Status Found
+        return redirect(BASE_URL, 302)  # Status Found
 
     # Accept any following paths for client-side routing
     @app.get("/dashboard")
@@ -215,7 +216,7 @@ def create_app(
     @app.get("/incompatible-rdb-schema")
     def get_incompatible_rdb_schema() -> BottleViewReturn:
         if not rdb_schema_needs_migrate and not rdb_schema_unsupported:
-            return redirect(f"{URL_PREFIX}/dashboard", 302)
+            return redirect(BASE_URL, 302)
         assert isinstance(storage, RDBStorage)
         return rdb_schema_template.render(
             rdb_schema_needs_migrate=rdb_schema_needs_migrate,
@@ -231,7 +232,7 @@ def create_app(
         with rdb_schema_migrate_lock:
             storage.upgrade()
             rdb_schema_needs_migrate = False
-        return redirect(f"{URL_PREFIX}/dashboard", 302)
+        return redirect(BASE_URL, 302)
 
     @app.get("/api/meta")
     @json_api_view
@@ -486,6 +487,10 @@ def create_app(
             if cached_path_exists(os.path.join(STATIC_DIR, gz_filename)):
                 filename = gz_filename
         return static_file(filename, root=STATIC_DIR)
+    
+    @app.error(404)
+    def error(err):
+        return redirect(BASE_URL, 302)
 
     register_artifact_route(app, storage, artifact_backend)
     return app

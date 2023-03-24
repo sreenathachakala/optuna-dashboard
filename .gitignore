@@ -7,7 +7,6 @@ dist/
 build/
 
 node_modules/
-public/
 .tox/
 tmp/
 

@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script>
         var URL_PREFIX = (new URLSearchParams(location.search).get('base') || "")
+        if(URL_PREFIX.slice(-1) === "/") URL_PREFIX = URL_PREFIX.slice(0,-1)
         var API_ENDPOINT =  URL_PREFIX
     </script>
     <script defer src="./static/bundle.js"></script>

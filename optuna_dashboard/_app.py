@@ -55,7 +55,7 @@ if typing.TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 URL_PREFIX = os.environ.get("URL_PREFIX", "")
-BASE_URL = f"{URL_PREFIX}/dashboard?base={URL_PREFIX}"
+BASE_URL = f"{URL_PREFIX}dashboard?base={URL_PREFIX}"
 # Static files
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "public")
@@ -202,7 +202,7 @@ def create_app(
     def index() -> BottleViewReturn:
         update_schema_compatibility_flags(storage)
         if rdb_schema_needs_migrate or rdb_schema_unsupported:
-            return redirect(f"{URL_PREFIX}/incompatible-rdb-schema", 302)
+            return redirect(f"{URL_PREFIX}incompatible-rdb-schema", 302)
         return redirect(BASE_URL, 302)  # Status Found
 
     # Accept any following paths for client-side routing
@@ -210,7 +210,7 @@ def create_app(
     def dashboard() -> BottleViewReturn:
         print("test dashboard")
         if rdb_schema_needs_migrate or rdb_schema_unsupported:
-            return redirect(f"{URL_PREFIX}/incompatible-rdb-schema", 302)
+            return redirect(f"{URL_PREFIX}incompatible-rdb-schema", 302)
         return static_file("index.html", BASE_DIR, mimetype="text/html")
 
     @app.get("/incompatible-rdb-schema")
